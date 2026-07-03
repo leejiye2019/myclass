@@ -285,6 +285,13 @@ input,textarea,select,button{font-family:'Outfit','Noto Sans KR',sans-serif;}
       <div class="f"><label>이메일</label><input type="email" id="li-email" placeholder="teacher@school.com"></div>
       <div class="f"><label>비밀번호</label><input type="password" id="li-pw" placeholder="••••••••"></div>
       <button class="btn-blk" id="btn-login" onclick="login()">로그인</button>
+      <button class="btn-blk" id="btn-google" onclick="loginGoogle()" style="background:#fff;color:var(--ink);border:1.5px solid var(--border);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Google로 계속하기
+      </button>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;">
+        <span style="cursor:pointer;text-decoration:underline" onclick="resetPw()">비밀번호를 잊으셨나요?</span>
+      </div>
       <div class="auth-msg err" id="li-msg"></div>
     </div>
     <div id="form-su" style="display:none">
@@ -354,6 +361,32 @@ input,textarea,select,button{font-family:'Outfit','Noto Sans KR',sans-serif;}
           <input type="time" id="mc-ts" style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--cream)">
           <span>~</span>
           <input type="time" id="mc-te" style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--cream)">
+        </div>
+      </div>
+      <div class="mf">
+        <label>수업 기간</label>
+        <div class="period-tabs" style="display:flex;gap:4px;margin-bottom:10px;">
+          <button type="button" class="period-tab on" id="pt-range" onclick="switchPeriodTab('range')" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;background:var(--ink);color:#fff;font-family:'Noto Sans KR',sans-serif;">기간 설정</button>
+          <button type="button" class="period-tab" id="pt-dates" onclick="switchPeriodTab('dates')" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;background:var(--cream);color:var(--ink2);font-family:'Noto Sans KR',sans-serif;">특정 날짜</button>
+          <button type="button" class="period-tab" id="pt-always" onclick="switchPeriodTab('always')" style="flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;background:var(--cream);color:var(--ink2);font-family:'Noto Sans KR',sans-serif;">기간 없음</button>
+        </div>
+        <div id="period-range">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="mc-date-start" style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--cream);">
+            <span style="font-size:12px;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;">~</span>
+            <input type="date" id="mc-date-end" style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--cream);">
+          </div>
+        </div>
+        <div id="period-dates" style="display:none;">
+          <p style="font-size:12px;color:var(--ink3);margin-bottom:8px;font-family:'Noto Sans KR',sans-serif;">날짜를 하나씩 추가하세요</p>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="date" id="mc-single-date" style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;background:var(--cream);">
+            <button type="button" onclick="addSpecificDate()" style="padding:9px 14px;background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;">추가</button>
+          </div>
+          <div id="mc-dates-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div id="period-always" style="display:none;">
+          <p style="font-size:13px;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;">요일이 설정된 경우 캘린더 전체에 표시돼요.</p>
         </div>
       </div>
       <div class="mf"><label>강의실</label><input type="text" id="mc-room" placeholder="예: 6305"></div>
@@ -446,7 +479,7 @@ input,textarea,select,button{font-family:'Outfit','Noto Sans KR',sans-serif;}
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase, ref, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -467,6 +500,8 @@ const db = getDatabase(app);
 var U = null;
 var D = { classes:{}, students:{}, journals:{}, profile:{} };
 var curClass = null, curDtab = 'overview';
+var periodTab = 'range';
+var specificDates = [];
 var selColor = '#F2A96A', selJCls = [];
 var calY = new Date().getFullYear(), calM = new Date().getMonth();
 var selDate = new Date(), stuFilter = 'all';
@@ -812,8 +847,25 @@ window.delClass = function() {
 
 // ── CALENDAR ──
 function getClsForDate(d) {
-  var dow=d.getDay();
-  return clsList().filter(function(c){return c.dows&&c.dows.indexOf(dow)>=0;});
+  var dow = d.getDay();
+  var dateStr = d.toISOString().slice(0,10);
+  return clsList().filter(function(c){
+    // Check period type
+    var ptype = c.periodType || "always";
+    if(ptype === "dates"){
+      // specific dates mode
+      return (c.specificDates||[]).indexOf(dateStr) >= 0;
+    }
+    // Must match day of week first
+    if(!c.dows || c.dows.indexOf(dow) < 0) return false;
+    if(ptype === "range"){
+      var start = c.dateStart, end = c.dateEnd;
+      if(start && dateStr < start) return false;
+      if(end   && dateStr > end)   return false;
+    }
+    // "always" = no restriction
+    return true;
+  });
 }
 function renderCal() {
   var pg=document.getElementById('pg-calendar');
@@ -1037,6 +1089,119 @@ window.toast = function(msg){
 // Enter key
 document.getElementById("li-pw").addEventListener("keydown",function(e){if(e.key==="Enter")window.login();});
 document.getElementById("li-email").addEventListener("keydown",function(e){if(e.key==="Enter")window.login();});
+
+// ── GOOGLE LOGIN ──
+window.loginGoogle = function(){
+  var provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider).catch(function(e){
+    document.getElementById("li-msg").textContent = "Google 로그인 실패: " + e.message;
+  });
+};
+
+// ── PASSWORD RESET ──
+window.resetPw = function(){
+  var email = document.getElementById("li-email").value.trim();
+  var msg = document.getElementById("li-msg");
+  if(!email){ msg.textContent="이메일을 먼저 입력해주세요."; return; }
+  sendPasswordResetEmail(auth, email).then(function(){
+    msg.style.color="#2a2";
+    msg.textContent="재설정 이메일을 보냈어요. 받은편지함을 확인해주세요!";
+  }).catch(function(e){
+    msg.style.color="#e44";
+    msg.textContent="전송 실패: 이메일 주소를 확인해주세요.";
+  });
+};
+
+// ── PERIOD TAB ──
+window.switchPeriodTab = function(tab){
+  periodTab = tab;
+  ["range","dates","always"].forEach(function(t){
+    var el = document.getElementById("period-"+t);
+    var btn = document.getElementById("pt-"+t);
+    if(el) el.style.display = t===tab ? "block" : "none";
+    if(btn){
+      btn.style.background = t===tab ? "var(--ink)" : "var(--cream)";
+      btn.style.color = t===tab ? "#fff" : "var(--ink2)";
+    }
+  });
+};
+
+window.addSpecificDate = function(){
+  var d = document.getElementById("mc-single-date").value;
+  if(!d) return;
+  if(specificDates.indexOf(d) < 0){
+    specificDates.push(d);
+    specificDates.sort();
+  }
+  renderSpecificDates();
+  document.getElementById("mc-single-date").value = "";
+};
+
+function renderSpecificDates(){
+  var el = document.getElementById("mc-dates-list");
+  if(!el) return;
+  el.innerHTML = specificDates.map(function(d, i){
+    return "<span style=\"display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--cream);border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-family:'Noto Sans KR',sans-serif;\">"
+      + d
+      + "<button type=\"button\" onclick=\"removeDate("+i+")\" style=\"background:none;border:none;cursor:pointer;color:var(--ink3);font-size:14px;line-height:1;padding:0 2px;\">×</button></span>";
+  }).join("");
+}
+
+window.removeDate = function(i){
+  specificDates.splice(i,1);
+  renderSpecificDates();
+};
+
+// ── UPDATE openClassMo & editClassMo to handle period ──
+var _origOpenClassMo = window.openClassMo;
+window.openClassMo = function(){
+  _origOpenClassMo();
+  specificDates = [];
+  document.getElementById("mc-date-start").value = "";
+  document.getElementById("mc-date-end").value = "";
+  renderSpecificDates();
+  switchPeriodTab("range");
+};
+
+var _origEditClassMo = window.editClassMo;
+window.editClassMo = function(id){
+  _origEditClassMo(id);
+  var c = D.classes[id]; if(!c) return;
+  specificDates = (c.specificDates||[]).slice();
+  document.getElementById("mc-date-start").value = c.dateStart||"";
+  document.getElementById("mc-date-end").value = c.dateEnd||"";
+  renderSpecificDates();
+  var tab = c.periodType||"range";
+  switchPeriodTab(tab);
+};
+
+// ── UPDATE saveClass to save period ──
+var _origSaveClass = window.saveClass;
+window.saveClass = function(){
+  var name = document.getElementById("mc-name").value.trim();
+  if(!name){toast("수업 이름을 입력해주세요");return;}
+  var id = document.getElementById("mc-id").value;
+  var dows = getDows();
+  var ts = document.getElementById("mc-ts").value;
+  var te = document.getElementById("mc-te").value;
+  var newId = id||("c"+Date.now());
+  var existing = id?D.classes[id]:{};
+  var obj = Object.assign({},existing,{
+    id:newId, name:name, schedule:buildSchedule(dows,ts,te),
+    room:document.getElementById("mc-room").value.trim(),
+    overview:document.getElementById("mc-ov").value.trim(),
+    color:selColor, dows:dows,
+    todos:existing.todos||[], files:existing.files||[], notes:existing.notes||"",
+    periodType: periodTab,
+    dateStart: periodTab==="range" ? document.getElementById("mc-date-start").value : "",
+    dateEnd:   periodTab==="range" ? document.getElementById("mc-date-end").value : "",
+    specificDates: periodTab==="dates" ? specificDates.slice() : []
+  });
+  dbSet("classes/"+newId, obj).then(function(){
+    closeMo("mo-class"); renderClasses();
+    toast(id?"수업이 수정됐어요 ✓":"수업이 추가됐어요 ✓");
+  });
+};
 
 </script>
 </body>
