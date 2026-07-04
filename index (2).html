@@ -1,9 +1,15 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyClass</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1C1C1E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyClass">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -527,6 +533,7 @@ function listenData() {
   onValue(dbRef('students'), function(snap) { D.students = snap.val() || {}; if (document.getElementById('pg-students').style.display !== 'none') renderStudents(); });
   onValue(dbRef('journals'), function(snap) { D.journals = snap.val() || {}; if (document.getElementById('pg-journal').style.display !== 'none') renderJournal(); if (document.getElementById('pg-calendar').style.display !== 'none') renderCal(); });
   onValue(dbRef('profile'), function(snap) { D.profile = snap.val() || {}; updateSidebar(); });
+  onValue(dbRef('classOrder'), function(snap) { D.classOrder = snap.val() || []; if (document.getElementById('pg-classes').style.display !== 'none') renderClasses(); });
   onValue(dbRef('classOrder'), function(snap) { D.classOrder = snap.val() || []; });
 }
 
@@ -924,7 +931,22 @@ function renderCal() {
   var sc=getClsForDate(selDate); var sj=jList().filter(function(j){return new Date(j.date).toDateString()===selDate.toDateString();});
   var evH=sc.map(function(c){var t=c.schedule&&c.schedule.indexOf('|')>=0?c.schedule.split('|')[1].trim():'';return'<div class="ev-item" onclick="openDetail(\''+c.id+'\')"><div class="ev-bar" style="background:'+c.color+'"></div><div class="ev-info"><h4>'+c.name+'</h4><p>'+(c.room||'')+'</p></div><div class="ev-time">'+t+'</div></div>';}).join('');
   evH+=sj.map(function(j){return'<div class="ev-item" onclick="showJd(\''+j.id+'\')"><div class="ev-bar" style="background:#C4A8F2"></div><div class="ev-info"><h4>📔 '+j.title+'</h4><p>일기</p></div></div>';}).join('');
-  var allC=clsList().map(function(c){return'<div class="ev-item" onclick="openDetail(\''+c.id+'\')"><div class="ev-bar" style="background:'+c.color+'"></div><div class="ev-info"><h4>'+c.name+'</h4><p>'+(c.schedule||'—')+'</p></div></div>';}).join('')||'<p style="font-size:13px;color:var(--ink3);font-family:\'Noto Sans KR\',sans-serif">등록된 수업 없음</p>';
+  // 이번 달에 수업이 있는지 확인
+  var monthStart = new Date(calY, calM, 1).toISOString().slice(0,10);
+  var monthEnd = new Date(calY, calM+1, 0).toISOString().slice(0,10);
+  var allC=clsList().filter(function(c){
+    var ptype = c.periodType || 'always';
+    if(ptype === 'dates'){
+      return (c.specificDates||[]).some(function(d){ return d >= monthStart && d <= monthEnd; });
+    }
+    if(ptype === 'range'){
+      var s = c.dateStart, e = c.dateEnd;
+      if(s && s > monthEnd) return false;
+      if(e && e < monthStart) return false;
+    }
+    if(!c.dows || !c.dows.length) return false;
+    return true;
+  }).map(function(c){return'<div class="ev-item" onclick="openDetail(\''+c.id+'\')" ><div class="ev-bar" style="background:'+c.color+'"></div><div class="ev-info"><h4>'+c.name+'</h4><p>'+(c.schedule||'—')+'</p></div></div>';}).join('')||'<p style="font-size:13px;color:var(--ink3);font-family:\'Noto Sans KR\',sans-serif">이번 달 수업 없음</p>';
   pg.innerHTML='<div class="cal-wrap"><div class="cal-box"><div class="cal-head"><div class="cal-title">'+MN[calM]+' '+calY+'</div><div class="cal-nav"><button onclick="chMon(-1)"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg></button><button onclick="chMon(1)"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg></button></div></div><div class="cal-dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div><div class="cal-grid">'+cells+'</div></div><div class="cal-side"><div class="cal-sb"><h3>'+selLabel+'</h3>'+(evH||'<p style="font-size:13px;color:var(--ink3);font-family:\'Noto Sans KR\',sans-serif">일정이 없어요</p>')+'</div><div class="cal-sb"><h3>전체 수업</h3>'+allC+'</div></div></div>';
 }
 window.selDay = function(y,m,d){selDate=new Date(y,m,d);calY=y;calM=m;renderCal();};
@@ -1135,6 +1157,13 @@ window.toast = function(msg){
 // Enter key
 document.getElementById("li-pw").addEventListener("keydown",function(e){if(e.key==="Enter")window.login();});
 document.getElementById("li-email").addEventListener("keydown",function(e){if(e.key==="Enter")window.login();});
+
+// ── SERVICE WORKER (PWA) ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/myclass/sw.js')
+    .then(function() { console.log('SW registered'); })
+    .catch(function(e) { console.log('SW error:', e); });
+}
 
 // ── GOOGLE LOGIN ──
 window.loginGoogle = function(){
