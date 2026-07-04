@@ -1,4 +1,4 @@
-const CACHE = 'myclass-v3';
+const CACHE = 'myclass-v3'; 
 const ASSETS = [
   '/myclass/',
   '/myclass/index.html'
