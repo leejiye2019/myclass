@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -527,6 +527,7 @@ function listenData() {
   onValue(dbRef('students'), function(snap) { D.students = snap.val() || {}; if (document.getElementById('pg-students').style.display !== 'none') renderStudents(); });
   onValue(dbRef('journals'), function(snap) { D.journals = snap.val() || {}; if (document.getElementById('pg-journal').style.display !== 'none') renderJournal(); if (document.getElementById('pg-calendar').style.display !== 'none') renderCal(); });
   onValue(dbRef('profile'), function(snap) { D.profile = snap.val() || {}; updateSidebar(); });
+  onValue(dbRef('classOrder'), function(snap) { D.classOrder = snap.val() || []; });
 }
 
 // ── AUTH STATE ──
@@ -637,26 +638,71 @@ function clsList() { return Object.values(D.classes || {}); }
 function stuList() { return Object.values(D.students || {}); }
 function jList() { return Object.values(D.journals || {}); }
 
-function renderClasses(filter) {
-  filter = filter || '';
-  var pg = document.getElementById('pg-classes');
-  var list = clsList().filter(function(c) { return c.name.toLowerCase().indexOf(filter.toLowerCase()) >= 0; });
-  var html = '<div class="search-bar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" placeholder="수업 검색..." oninput="renderClasses(this.value)" value="' + filter + '"></div>';
-  if (!list.length) { html += '<div class="empty"><div class="ei">📁</div><p>수업이 없어요.<br>수업 추가 버튼으로 시작하세요!</p></div>'; }
-  else {
-    html += '<div class="folder-grid">';
-    list.forEach(function(c, i) {
-      html += '<div class="fc ani" style="animation-delay:' + (i*0.05) + 's" onclick="openDetail(\'' + c.id + '\')">'
-        + '<div class="fc-tab" style="background:' + c.color + '"></div>'
-        + '<div class="fc-body" style="background:' + c.color + '55"><span class="fc-label">' + c.name + '</span><div class="fc-meta">' + (c.schedule || '일정 미설정') + '</div></div>'
-        + '<div class="fc-edit"><button class="ic-btn" onclick="event.stopPropagation();editClassMo(\'' + c.id + '\')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></div>';
-    });
-    html += '</div>';
-  }
-  pg.innerHTML = html;
+function clsOrder() {
+  var all = clsList();
+  var order = D.classOrder || [];
+  if (!order.length) return all;
+  var sorted = [];
+  order.forEach(function(id) { var c = D.classes[id]; if (c) sorted.push(c); });
+  all.forEach(function(c) { if (order.indexOf(c.id) < 0) sorted.push(c); });
+  return sorted;
 }
-window.renderClasses = renderClasses;
 
+function renderClasses(filter) {
+  filter = filter || "";
+  var pg = document.getElementById("pg-classes");
+  var list = clsOrder().filter(function(c) { return c.name.toLowerCase().indexOf(filter.toLowerCase()) >= 0; });
+  var h = "<div class=\"search-bar\"><svg viewBox=\"0 0 24 24\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.35-4.35\"/></svg><input type=\"text\" placeholder=\"수업 검색...\" oninput=\"renderClasses(this.value)\" value=\"" + filter + "\"></div>";
+  if (!list.length) { h += "<div class=\"empty\"><div class=\"ei\">📁</div><p>수업이 없어요.<br>수업 추가 버튼으로 시작하세요!</p></div>"; }
+  else {
+    h += "<div class=\"folder-grid\" id=\"folder-grid-el\">";
+    list.forEach(function(c, i) {
+      h += "<div class=\"fc ani\" draggable=\"true\" data-id=\"" + c.id + "\" style=\"animation-delay:" + (i*0.05) + "s\" onclick=\"openDetail('" + c.id + "')\">"
+        + "<div class=\"fc-tab\" style=\"background:" + c.color + "\"></div>"
+        + "<div class=\"fc-body\" style=\"background:" + c.color + "55\"><span class=\"fc-label\">" + c.name + "</span><div class=\"fc-meta\">" + (c.schedule||"일정 미설정") + "</div></div>"
+        + "<div class=\"fc-edit\"><button class=\"ic-btn\" onclick=\"event.stopPropagation();editClassMo('" + c.id + "')\"><svg viewBox=\"0 0 24 24\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"/><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"/></svg></button></div></div>";
+    });
+    h += "</div>";
+  }
+  pg.innerHTML = h;
+  initDragDrop();
+}
+
+var dragSrc = null;
+function initDragDrop() {
+  var grid = document.getElementById("folder-grid-el");
+  if (!grid) return;
+  grid.querySelectorAll(".fc").forEach(function(card) {
+    card.addEventListener("dragstart", function(e) {
+      dragSrc = card;
+      setTimeout(function(){ card.style.opacity="0.4"; }, 0);
+      e.dataTransfer.effectAllowed = "move";
+    });
+    card.addEventListener("dragend", function() {
+      card.style.opacity = "1";
+      grid.querySelectorAll(".fc").forEach(function(c){ c.style.outline=""; });
+    });
+    card.addEventListener("dragover", function(e) {
+      e.preventDefault();
+      if (card !== dragSrc) card.style.outline = "2.5px solid var(--ink)";
+    });
+    card.addEventListener("dragleave", function() { card.style.outline = ""; });
+    card.addEventListener("drop", function(e) {
+      e.preventDefault(); e.stopPropagation();
+      card.style.outline = "";
+      if (dragSrc && dragSrc !== card) {
+        var cards2 = Array.from(grid.querySelectorAll(".fc"));
+        var si = cards2.indexOf(dragSrc), ti = cards2.indexOf(card);
+        if (si < ti) grid.insertBefore(dragSrc, card.nextSibling);
+        else grid.insertBefore(dragSrc, card);
+        var newOrder = Array.from(grid.querySelectorAll(".fc")).map(function(c){ return c.dataset.id; });
+        D.classOrder = newOrder;
+        dbSet("classOrder", newOrder);
+        toast("순서가 저장됐어요 ✓");
+      }
+    });
+  });
+}
 window.openDetail = function(id) {
   curClass = id;
   var c = D.classes[id]; if (!c) return;
