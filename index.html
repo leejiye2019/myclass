@@ -1134,24 +1134,23 @@ function renderJournal(){
     var cls2 = cids.map(function(cid){ return D.classes[cid]; }).filter(Boolean);
     var d = new Date(j.date);
     var tags = cls2.map(function(c){
-      return '<span class="j-tag" style="background:'+c.color+'30">'+c.name+'</span>';
-    }).join('');
-    tags += '<span class="j-tag" style="background:var(--cream);color:var(--ink3)">'+d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+'</span>';
-
+      return "<span class=\"j-tag\" style=\"background:"+c.color+"30\">"+c.name+"</span>";
+    }).join("");
+    tags += "<span class=\"j-tag\" style=\"background:var(--cream);color:var(--ink3)\">"+d.getFullYear()+"."+pad(d.getMonth()+1)+"."+pad(d.getDate())+"</span>";
     var jid = j.id;
-    return '<div class="j-card" onclick="showJd(''+jid+'')" style="cursor:pointer;background:var(--white);border-radius:var(--r-md);border:1px solid var(--border);padding:18px;transition:.2s;margin-bottom:12px;">'
-      +'<div style="display:flex;gap:13px;align-items:flex-start;">'
-      +'<div style="text-align:center;flex-shrink:0;min-width:42px;">'
-      +'<div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;line-height:1;">'+d.getDate()+'</div>'
-      +'<div style="font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;">'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+'</div>'
-      +'</div>'
-      +'<div style="width:1px;background:var(--border);align-self:stretch;flex-shrink:0;"></div>'
-      +'<div style="flex:1;min-width:0;">'
-      +'<h4 style="font-size:14px;font-weight:600;margin-bottom:5px;font-family:'Noto Sans KR',sans-serif;">'+j.title+'</h4>'
-      +'<p style="font-size:13px;color:var(--ink2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:'Noto Sans KR',sans-serif;">'+j.content+'</p>'
-      +'<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;">'+tags+'</div>'
-      +'</div></div></div>';
-  }).join('') || '<div class="empty"><div class="ei">📔</div><p>아직 일기가 없어요.<br>오늘 수업 이야기를 써보세요!</p></div>';
+    return "<div class=\"j-card\" onclick=\"showJd('"+jid+"')\" style=\"cursor:pointer;background:var(--white);border-radius:var(--r-md);border:1px solid var(--border);padding:18px;margin-bottom:12px;transition:.2s;\">"
+      +"<div style=\"display:flex;gap:13px;align-items:flex-start;\">"
+      +"<div style=\"text-align:center;flex-shrink:0;min-width:42px;\">"
+      +"<div style=\"font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;line-height:1;\">"+d.getDate()+"</div>"
+      +"<div style=\"font-size:10px;font-weight:600;text-transform:uppercase;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;\">"+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]+"</div>"
+      +"</div>"
+      +"<div style=\"width:1px;background:var(--border);align-self:stretch;flex-shrink:0;\"></div>"
+      +"<div style=\"flex:1;min-width:0;\">"
+      +"<h4 style=\"font-size:14px;font-weight:600;margin-bottom:5px;font-family:'Noto Sans KR',sans-serif;\">"+j.title+"</h4>"
+      +"<p style=\"font-size:13px;color:var(--ink2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-family:'Noto Sans KR',sans-serif;\">"+j.content+"</p>"
+      +"<div style=\"display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;\">"+tags+"</div>"
+      +"</div></div></div>";
+  }).join("") || "<div class=\"empty\"><div class=\"ei\">📔</div><p>아직 일기가 없어요.<br>오늘 수업 이야기를 써보세요!</p></div>";
 
   var monthMap = {};
   jList().forEach(function(j){
@@ -1159,13 +1158,13 @@ function renderJournal(){
     monthMap[k] = (monthMap[k]||0) + 1;
   });
   var mItems = Object.entries(monthMap).sort(function(a,b){ return b[0].localeCompare(a[0]); }).map(function(e){
-    return '<div class="mitem"><span>'+e[0]+'</span><span>'+e[1]+'개</span></div>';
-  }).join('') || '<p style="font-size:13px;color:var(--ink3)">없음</p>';
+    return "<div class=\"mitem\"><span>"+e[0]+"</span><span>"+e[1]+"개</span></div>";
+  }).join("") || "<p style=\"font-size:13px;color:var(--ink3)\">없음</p>";
 
-  pg.innerHTML = '<div style="display:grid;grid-template-columns:1fr 260px;gap:22px;">'
-    + '<div style="display:flex;flex-direction:column;">'+cards+'</div>'
-    + '<div><div class="j-sb"><h3>월별 보기</h3>'+mItems+'</div></div>'
-    + '</div>';
+  pg.innerHTML = "<div style=\"display:grid;grid-template-columns:1fr 260px;gap:22px;\">"
+    + "<div>"+cards+"</div>"
+    + "<div><div class=\"j-sb\"><h3>월별 보기</h3>"+mItems+"</div></div>"
+    + "</div>";
 }
 window.openJMo = function(){
   document.getElementById("mo-j-ttl").textContent="일기 쓰기";
