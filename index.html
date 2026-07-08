@@ -918,7 +918,8 @@ window.delClass = function() {
 // ── CALENDAR ──
 function getClsForDate(d) {
   var dow = d.getDay();
-  var dateStr = d.toISOString().slice(0,10);
+  // 로컬 날짜 문자열 사용 (toISOString은 UTC 기준이라 한국 시간과 다를 수 있음)
+  var dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   return clsList().filter(function(c){
     // Check period type
     var ptype = c.periodType || "always";
