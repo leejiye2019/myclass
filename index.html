@@ -307,6 +307,17 @@ input,textarea,select,button{font-family:'Outfit','Noto Sans KR',sans-serif;}
       <button class="btn-blk" id="btn-signup" onclick="signup()">가입하기</button>
       <div class="auth-msg" id="su-msg"></div>
     </div>
+    <div style="margin-top:20px;text-align:center;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:12px;color:var(--ink3);font-family:'Noto Sans KR',sans-serif;">또는</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+      <button onclick="enterGuest()" style="width:100%;padding:12px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;font-weight:500;color:var(--ink2);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.2s;" onmouseover="this.style.borderColor='var(--ink2)'" onmouseout="this.style.borderColor='var(--border)'">
+        👀 로그인 없이 둘러보기
+      </button>
+      <p style="font-size:11px;color:var(--ink3);margin-top:8px;font-family:'Noto Sans KR',sans-serif;">기능 사용 시 로그인이 필요해요</p>
+    </div>
   </div>
 </div>
 
@@ -522,6 +533,7 @@ var D = { classes:{}, students:{}, journals:{}, profile:{} };
 var curClass = null, curDtab = 'overview';
 var periodTab = 'range';
 var selStuColor = '#F2A96A';
+var isGuest = false;
 var specificDates = [];
 var selColor = '#F2A96A', selJCls = [];
 var calY = new Date().getFullYear(), calM = new Date().getMonth();
@@ -535,9 +547,18 @@ var DL = ['일','월','화','수','목','금','토'];
 function uid() { return U ? U.uid : null; }
 function dbRef(path) { return ref(db, 'users/' + uid() + '/' + path); }
 
-async function dbSet(path, val) { await set(dbRef(path), val); }
-async function dbUpdate(path, val) { await update(dbRef(path), val); }
-async function dbRemove(path) { await remove(dbRef(path)); }
+async function dbSet(path, val) {
+  if(isGuest) { /* 게스트: 메모리에만 저장 */ return; }
+  await set(dbRef(path), val);
+}
+async function dbUpdate(path, val) {
+  if(isGuest) return;
+  await update(dbRef(path), val);
+}
+async function dbRemove(path) {
+  if(isGuest) return;
+  await remove(dbRef(path));
+}
 async function dbGet(path) {
   var snap = await get(dbRef(path));
   return snap.exists() ? snap.val() : null;
@@ -866,6 +887,7 @@ window.delFile = function(i) {
 
 // class modal
 window.openClassMo = function() {
+  if(!requireLogin('수업 추가')) return;
   document.getElementById('mo-class-ttl').textContent='새 수업 추가';
   document.getElementById('mc-id').value=''; document.getElementById('mc-name').value='';
   document.getElementById('mc-room').value=''; document.getElementById('mc-ov').value='';
@@ -1095,6 +1117,7 @@ function initStuDragDrop() {
 function setStuF(f) { stuFilter = f; var dd = document.getElementById("stu-dropdown"); if(dd) dd.style.display="none"; renderStudents(); }
 window.setStuF = setStuF;
 window.openStuMo = function(){
+  if(!requireLogin('학생 추가')) return;
   document.getElementById('mo-stu-ttl').textContent='학생 추가';
   document.getElementById('ms-id').value=''; document.getElementById('ms-name').value=''; document.getElementById('ms-memo').value='';
   document.getElementById('ms-del').style.display='none';
@@ -1169,6 +1192,7 @@ function renderJournal(){
     + "</div>";
 }
 window.openJMo = function(){
+  if(!requireLogin('일기 쓰기')) return;
   document.getElementById("mo-j-ttl").textContent="일기 쓰기";
   document.getElementById("mj-id").value="";
   document.getElementById("mj-title").value="";
@@ -1328,6 +1352,74 @@ if ('serviceWorker' in navigator) {
   caches.keys().then(function(keys) {
     keys.forEach(function(k) { caches.delete(k); console.log('Cache deleted:', k); });
   });
+}
+
+// ── GUEST MODE ──
+window.enterGuest = function() {
+  isGuest = true;
+  U = null;
+  D = {
+    classes: {
+      'demo1': { id:'demo1', name:'영어 기초반', schedule:'월/수 | 16:00 - 17:30', room:'301호', color:'#F2A96A', dows:[1,3], periodType:'always', overview:'중학교 1학년 대상 영어 기초 수업', notes:'', todos:[{text:'단어 테스트 준비', done:false},{text:'교재 p.24 예습', done:true}], files:[] },
+      'demo2': { id:'demo2', name:'토플 실전반', schedule:'화/목 | 19:00 - 21:00', room:'502호', color:'#A8CAF2', dows:[2,4], periodType:'always', overview:'TOEFL iBT 100점 이상 목표 심화반', notes:'', todos:[{text:'Reading mock test 채점', done:false}], files:[] },
+      'demo3': { id:'demo3', name:'수능 영어', schedule:'금 | 17:00 - 19:00', room:'201호', color:'#A8E2C8', dows:[5], periodType:'always', overview:'고3 수능 영어 집중 대비반', notes:'', todos:[], files:[] }
+    },
+    students: {
+      's1': {id:'s1', name:'김민준', classId:'demo1', memo:'발음 교정 필요', color:'#F2A96A'},
+      's2': {id:'s2', name:'이서연', classId:'demo1', memo:'어휘력 우수', color:'#A8CAF2'},
+      's3': {id:'s3', name:'박지호', classId:'demo2', memo:'Reading 집중', color:'#A8E2C8'},
+      's4': {id:'s4', name:'최유진', classId:'demo2', memo:'Speaking 목표', color:'#C4A8F2'},
+      's5': {id:'s5', name:'정다은', classId:'demo3', memo:'수능 2등급 목표', color:'#F2D46A'}
+    },
+    journals: {
+      'j1': {id:'j1', title:'오늘 수업, 생각보다 잘 됐다', content:'영어 기초반에서 처음으로 게임 활동을 도입했는데 학생들 반응이 너무 좋았다. 특히 김민준이 평소보다 훨씬 적극적으로 참여함.', date:'2026-07-07', classIds:['demo1']},
+      'j2': {id:'j2', title:'토플반 모의고사 결과', content:'이번 주 Reading 모의고사 평균 24점. 지난 달보다 3점 향상. 박지호가 특히 많이 올랐다.', date:'2026-07-03', classIds:['demo2']},
+      'j3': {id:'j3', title:'수능 영어 - 빈칸추론 집중', content:'오늘은 빈칸추론 유형만 집중적으로 다뤘다. 아이들이 처음엔 어려워했지만 패턴을 익히고 나서 정답률이 많이 올랐음.', date:'2026-06-28', classIds:['demo3']}
+    },
+    profile: {name:'게스트', role:'선생님', school:'', phone:'', bio:''},
+    classOrder: ['demo1','demo2','demo3'],
+    stuOrder: []
+  };
+  document.getElementById('auth').className = '';
+  document.getElementById('app').className = 'on';
+  document.getElementById('sb-greet').textContent = '게스트 선생님';
+  document.getElementById('sb-name').textContent = '게스트';
+  document.getElementById('sb-role').textContent = '둘러보는 중';
+  document.getElementById('sb-av').textContent = '👀';
+  // Show guest banner
+  showGuestBanner();
+  go('classes', document.getElementById('ni-classes'));
+};
+
+function showGuestBanner() {
+  var existing = document.getElementById('guest-banner');
+  if (existing) return;
+  var banner = document.createElement('div');
+  banner.id = 'guest-banner';
+  banner.innerHTML = '👀 둘러보기 모드예요. <strong>데이터는 저장되지 않아요.</strong> &nbsp;<button onclick="document.getElementById(\'auth\').className=\'on\';document.getElementById(\'app\').className=\'\';isGuest=false;" style="background:var(--white);border:1.5px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">로그인하기</button>';
+  banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:50px;font-size:13px;z-index:300;white-space:nowrap;font-family:\'Noto Sans KR\',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;';
+  document.body.appendChild(banner);
+}
+
+function requireLogin(action) {
+  if (!isGuest) return true;
+  // Show login prompt
+  var existing = document.getElementById('login-prompt-mo');
+  if (existing) existing.remove();
+  var mo = document.createElement('div');
+  mo.id = 'login-prompt-mo';
+  mo.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;';
+  mo.innerHTML = '<div style="background:#fff;border-radius:var(--r-lg);padding:32px;max-width:360px;width:100%;text-align:center;box-shadow:0 12px 48px rgba(0,0,0,.2);">'
+    + '<div style="font-size:36px;margin-bottom:12px;">🔐</div>'
+    + '<h3 style="font-size:18px;font-weight:700;margin-bottom:8px;font-family:\'Noto Sans KR\',sans-serif;">로그인이 필요해요</h3>'
+    + '<p style="font-size:14px;color:var(--ink3);margin-bottom:20px;font-family:\'Noto Sans KR\',sans-serif;line-height:1.6;">' + (action||'이 기능을 사용하려면') + '<br>로그인이 필요해요.</p>'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button onclick="this.closest(\'#login-prompt-mo\').remove()" style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:transparent;font-size:14px;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">계속 둘러보기</button>'
+    + '<button onclick="document.getElementById(\'auth\').className=\'on\';document.getElementById(\'app\').className=\'\';isGuest=false;this.closest(\'#login-prompt-mo\').remove();" style="flex:1;padding:11px;border:none;border-radius:var(--r-sm);background:var(--ink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:\'Noto Sans KR\',sans-serif;">로그인하기</button>'
+    + '</div></div>';
+  mo.onclick = function(e){ if(e.target===mo) mo.remove(); };
+  document.body.appendChild(mo);
+  return false;
 }
 
 // ── GOOGLE LOGIN ──
